@@ -1,0 +1,27 @@
+target/
+.work/
+.classpath
+.project
+.settings/
+.idea
+.idea/vcs.xml
+bin/
+gen/
+logs/
+da1f4e7154c4be196d75bf1f48eb531e/
+*.iml
+*.log
+mvnw
+mvnw.cmd
+.mvn/
+pom.xml.tagackup
+pom.xml.versionsBackup
+pom.xml.next
+pom.xml.releaseB
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+*.xml.bak
+# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+!/.mvn/wrapper/maven-wrapper.jar

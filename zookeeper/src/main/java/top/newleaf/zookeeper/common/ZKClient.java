@@ -1,4 +1,4 @@
-package top.newleaf.zookeeper;
+package top.newleaf.zookeeper.common;
 
 import org.I0Itec.zkclient.ZkClient;
 

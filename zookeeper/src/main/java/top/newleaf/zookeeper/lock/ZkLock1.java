@@ -2,7 +2,7 @@ package top.newleaf.zookeeper.lock;
 
 import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.exception.ZkNodeExistsException;
-import top.newleaf.zookeeper.ZKClient;
+import top.newleaf.zookeeper.common.ZKClient;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -44,12 +44,6 @@ public class ZkLock1 {
                 ZKClient.getClient().delete(lock.getKey());
                 System.out.println("释放锁" + lock.getIdentifier());
             }
-        }
-    }
-
-    private static void checkPath() {
-        if (!ZKClient.getClient().exists(LOCK)) {
-            ZKClient.getClient().createPersistent(LOCK);
         }
     }
 

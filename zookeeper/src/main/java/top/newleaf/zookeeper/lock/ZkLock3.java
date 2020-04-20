@@ -1,13 +1,12 @@
 package top.newleaf.zookeeper.lock;
 
 import org.I0Itec.zkclient.IZkDataListener;
-import top.newleaf.zookeeper.ZKClient;
+import top.newleaf.zookeeper.common.ZKClient;
+import top.newleaf.zookeeper.util.ZkUtils;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * watch前一个节点，可重入
@@ -18,25 +17,20 @@ public class ZkLock3 {
 
     private final static String LOCK = "/lock2";
 
-    static {
-        if (!ZKClient.getClient().exists(LOCK)) {
-            ZKClient.getClient().createPersistent(LOCK);
-        }
-    }
-
     public static Lock lock(String key) {
+        ZkUtils.checkPath(LOCK);
         long threadId = Thread.currentThread().getId();
         // 重入锁
-        Lock lock = reenterLock(threadId);
+        Lock lock = reLock(threadId);
         if (lock != null) {
             return lock;
         }
         // 创建临时节点后，判断节点是不是顺序第一的节点
-        String currentPath = LockUtils.getPath(LOCK, key);
+        String currentPath = ZkUtils.getPath(LOCK, key);
         String data = incrSequence(threadId, "0");
         currentPath = ZKClient.getClient().createEphemeralSequential(currentPath, data);
         List<String> children = getChildren();
-        String path = LockUtils.getPath(LOCK, children.get(0));
+        String path = ZkUtils.getPath(LOCK, children.get(0));
         // 顺序第一抢锁成功，生成锁记录
         if (currentPath.equals(path)) {
             System.out.println("上锁成功" + currentPath);
@@ -60,11 +54,11 @@ public class ZkLock3 {
         return null;
     }
 
-    private static Lock reenterLock(long threadId) {
+    private static Lock reLock(long threadId) {
         List<String> children = getChildren();
         if (children != null && !children.isEmpty()) {
             String key = children.get(0);
-            String path = LockUtils.getPath(LOCK, key);
+            String path = ZkUtils.getPath(LOCK, key);
             String data = ZKClient.getClient().readData(path);
             String[] values = data.split("_");
             if (values[0].equals(String.valueOf(threadId))) {
@@ -82,9 +76,11 @@ public class ZkLock3 {
                 String[] values = data.split("_");
                 if (values[0].equals(String.valueOf(lock.getIdentifier()))) {
                     if (Integer.valueOf(values[1]) == 1) {
+                        // 锁记录数值为1时释放锁
                         ZKClient.getClient().delete(lock.getKey());
                         System.out.println("释放锁" + lock.getKey());
                     } else {
+                        // 所记录数值>1是减重入次数
                         ZKClient.getClient().writeData(lock.getKey(), decrSequence(values[0], values[1]));
                         System.out.println("释放重入锁" + lock.getKey());
                     }
@@ -109,7 +105,7 @@ public class ZkLock3 {
 
     private static String getBeforePath(List<String> children, String currentPath) {
         int i = Collections.binarySearch(children, currentPath.substring(LOCK.length() + 1));
-        return LockUtils.getPath(LOCK, children.get(i - 1));
+        return ZkUtils.getPath(LOCK, children.get(i - 1));
     }
 
     static class LockListener implements IZkDataListener {

@@ -1,7 +1,8 @@
 package top.newleaf.zookeeper.lock;
 
 import org.I0Itec.zkclient.IZkDataListener;
-import top.newleaf.zookeeper.ZKClient;
+import top.newleaf.zookeeper.common.ZKClient;
+import top.newleaf.zookeeper.util.ZkUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,17 +17,14 @@ public class ZkLock2 {
 
     private static String LOCK = "/lock2";
 
-    static {
-        checkPath();
-    }
-
     public static Lock lock(String key) {
+        ZkUtils.checkPath(LOCK);
         long threadId = Thread.currentThread().getId();
         // 创建临时节点后，判断节点是不是顺序第一的节点
-        String currentPath = LockUtils.getPath(LOCK, key);
+        String currentPath = ZkUtils.getPath(LOCK, key);
         currentPath = ZKClient.getClient().createEphemeralSequential(currentPath, threadId);
         List<String> children = getChildren();
-        String path = LockUtils.getPath(LOCK, children.get(0));
+        String path = ZkUtils.getPath(LOCK, children.get(0));
         // 顺序第一抢锁成功，生成锁记录
         if (currentPath.equals(path)) {
             System.out.println("上锁成功" + currentPath);
@@ -66,13 +64,7 @@ public class ZkLock2 {
 
     private static String getBeforePath(List<String> children, String currentPath) {
         int i = Collections.binarySearch(children, currentPath.substring(LOCK.length() + 1));
-        return LockUtils.getPath(LOCK, children.get(i - 1));
-    }
-
-    private static void checkPath() {
-        if (!ZKClient.getClient().exists(LOCK)) {
-            ZKClient.getClient().createPersistent(LOCK);
-        }
+        return ZkUtils.getPath(LOCK, children.get(i - 1));
     }
 
     static class LockListener implements IZkDataListener {
